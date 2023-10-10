@@ -22,7 +22,7 @@ public interface IServer extends Remote {
    * @param logger the logger
    * @exception RemoteException the RMI failure
    */
-  void setLogger(ILogger logger) throws RemoteException;
+  //void setLogger(ILogger logger) throws RemoteException;
 
   /**
    * Sets the translation service.
@@ -30,7 +30,7 @@ public interface IServer extends Remote {
    * @param translationService the translation service
    * @exception RemoteException the RMI failure
    */
-  void setTranslationService(ITranslationService translationService) throws RemoteException;
+  //void setTranslationService(ITranslationService translationService) throws RemoteException;
 
   /**
    * Starts the server.
@@ -41,4 +41,6 @@ public interface IServer extends Remote {
    * Stops the server.
    */
   //void shutdown();
+
+  String print() throws RemoteException;
 }
