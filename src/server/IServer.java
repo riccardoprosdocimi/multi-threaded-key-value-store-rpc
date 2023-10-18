@@ -17,30 +17,44 @@ public interface IServer extends Remote {
   //void setPortNumber(String port);
 
   /**
-   * Sets the logger.
-   *
-   * @param logger the logger
-   * @exception RemoteException the RMI failure
-   */
-  //void setLogger(ILogger logger) throws RemoteException;
-
-  /**
-   * Sets the translation service.
-   *
-   * @param translationService the translation service
-   * @exception RemoteException the RMI failure
-   */
-  //void setTranslationService(ITranslationService translationService) throws RemoteException;
-
-  /**
    * Starts the server.
+   *
+   * @exception RemoteException the RMI failure
    */
-  //void execute();
+  void execute() throws RemoteException;
+
+  /**
+   * Saves a key-value pair in a hashmap.
+   *
+   * @param key   the word to be translated
+   * @param value the translation
+   * @return the outcome of the operation
+   * @exception RemoteException the RMI failure
+   */
+  String put(String key, String value) throws  RemoteException;
+
+  /**
+   * Retrieves the value of a key.
+   *
+   * @param key the word to be translated
+   * @return the translation
+   * @exception RemoteException the RMI failure
+   */
+  String get(String key) throws RemoteException;
+
+  /**
+   * Removes a key-value pair.
+   *
+   * @param key the word to be deleted
+   * @return the outcome of the operation
+   * @exception RemoteException the RMI failure
+   */
+  String delete(String key) throws RemoteException;
 
   /**
    * Stops the server.
+   *
+   * @exception RemoteException the RMI failure
    */
-  //void shutdown();
-
-  String print() throws RemoteException;
+  void shutdown() throws RemoteException;
 }

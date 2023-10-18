@@ -7,43 +7,6 @@ import utils.ILogger;
  */
 public interface IClient {
   /**
-   * Gets the hostname.
-   *
-   * @param hostname the hostname
-   * @return the IP address
-   */
-  //InetAddress getHostname(String hostname);
-
-  /**
-   * Sets the IP address.
-   *
-   * @param address the IP address
-   */
-  //void setAddress(InetAddress address);
-
-  /**
-   * Gets the port.
-   *
-   * @param port the port
-   * @return the port number
-   */
-  //int getPort(String port);
-
-  /**
-   * Sets the port number.
-   *
-   * @param portNumber the port number
-   */
-  //void setPortNumber(int portNumber);
-
-  /**
-   * Sets the logger.
-   *
-   * @param logger the logger
-   */
-  void setLogger(ILogger logger);
-
-  /**
    * Gets the user request.
    *
    * @return the user request
@@ -51,11 +14,9 @@ public interface IClient {
   String getRequest();
 
   /**
-   * Sets the user request.
-   *
-   * @param request the user request
+   * Pre-populates the key-value store.
    */
-  void setRequest(String request);
+  void prePopulate();
 
   /**
    * Starts the client.
