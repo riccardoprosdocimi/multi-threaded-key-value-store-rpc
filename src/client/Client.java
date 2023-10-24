@@ -18,11 +18,12 @@ public class Client implements IClient {
     try {
       this.logger = new Logger("ClientLogger", "ClientLog.log");
       this.scanner = new Scanner(System.in);
-      Registry registry = LocateRegistry.getRegistry("TranslationServer", 1099);
-      this.server = (IServer) registry.lookup("TranslationServer");
+      Registry registry = LocateRegistry.getRegistry("localhost", 50000);
+      this.server = (IServer) registry.lookup("//localhost/TranslationServer");
     } catch (Exception e) {
       this.logger.log("Client error: " + e.getMessage());
       System.err.println("Client error: " + e.getMessage());
+      this.shutdown();
       e.printStackTrace();
     }
   }
@@ -47,10 +48,14 @@ public class Client implements IClient {
       System.out.println(this.server.put("love", "amore"));
       this.logger.log("Pre-population completed");
       System.out.println("Pre-population completed");
-    } catch (RemoteException e) {
-      this.logger.log("Server error (pre-populate): " + e.getMessage());
-      System.err.println("Server error (pre-populate): " + e.getMessage());
-      e.printStackTrace();
+      Thread.sleep(2000);
+    } catch (RemoteException re) {
+      this.logger.log("TranslationServer error (pre-populate): " + re.getMessage());
+      System.err.println("TranslationServer error (pre-populate): " + re.getMessage());
+      re.printStackTrace();
+    } catch (InterruptedException ie) {
+      this.logger.log("Pre-population error: " + ie.getMessage());
+      ie.printStackTrace();
     }
   }
 
@@ -120,8 +125,8 @@ public class Client implements IClient {
             return "Invalid request. Please follow the predefined protocol PUT/GET/DELETE:key:value[with PUT only] and try again";
         }
       } catch (RemoteException e) {
-        this.logger.log("Server error: " + e.getMessage());
-        result = "Server error: " + e.getMessage();
+        this.logger.log("TranslationServer error: " + e.getMessage());
+        result = "TranslationServer error: " + e.getMessage();
         e.printStackTrace();
       }
     }
@@ -137,15 +142,8 @@ public class Client implements IClient {
     this.logger.log("Client is running...");
     while (isRunning) {
       String request = this.getRequest(); // get the user request
-      if (request.equalsIgnoreCase("client shutdown") || request.equalsIgnoreCase("client stop")) { // if the user wants to quit
+      if (request.equalsIgnoreCase("shutdown") || request.equalsIgnoreCase("stop")) { // if the user wants to quit
         isRunning = false; // prepare the shutdown process
-      } else if (request.equalsIgnoreCase("server shutdown") || request.equalsIgnoreCase("server stop")) {
-        try {
-          this.server.shutdown();
-        } catch (RemoteException e) {
-          this.logger.log("Server error (shutdown): " + e.getMessage());
-          System.err.println("Server error (shutdown): " + e.getMessage());
-        }
       } else {
         System.out.println(this.parseRequest(request));
       }
@@ -158,11 +156,16 @@ public class Client implements IClient {
    */
   @Override
   public void shutdown() {
+    try {
+      this.server.shutdown();
+    } catch (RemoteException e) {
+      this.logger.log("TranslationServer error (shutdown): " + e.getMessage());
+      System.err.println("TranslationServer error (shutdown): " + e.getMessage());
+    }
     this.logger.log("Received a request to shut down...");
     System.out.println("Client is shutting down...");
     this.scanner.close();
-    this.logger.log("Client stopped");
-    this.logger.log("");
+    this.logger.log("Client closed");
     this.logger.close();
     System.out.println("Client closed");
   }

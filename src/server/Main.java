@@ -5,10 +5,10 @@ import java.rmi.RemoteException;
 public class Main {
   public static void main(String[] args) {
     try {
-      IServer server = new Server();
-    } catch (RemoteException re) {
-      System.out.println("IServer constructor: " + re.getMessage());
-      re.printStackTrace();
+      new Server();
+    } catch (RemoteException e) {
+      System.out.println("TranslationServer constructor: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 }

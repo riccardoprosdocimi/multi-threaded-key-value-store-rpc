@@ -3,26 +3,10 @@ package server;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import utils.ILogger;
-
 /**
  * The interface server contains methods that all types of translation servers should support.
  */
 public interface IServer extends Remote {
-  /**
-   * Sets the port number.
-   *
-   * @param port the port
-   */
-  //void setPortNumber(String port);
-
-  /**
-   * Starts the server.
-   *
-   * @exception RemoteException the RMI failure
-   */
-  void execute() throws RemoteException;
-
   /**
    * Saves a key-value pair in a hashmap.
    *
@@ -50,6 +34,14 @@ public interface IServer extends Remote {
    * @exception RemoteException the RMI failure
    */
   String delete(String key) throws RemoteException;
+
+  /**
+   * Returns the size of the key-value store.
+   *
+   * @return the size of the key-value store
+   * @exception RemoteException the RMI failure
+   */
+  int getMapSize() throws RemoteException;
 
   /**
    * Stops the server.
