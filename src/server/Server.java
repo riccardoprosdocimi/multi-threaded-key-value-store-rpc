@@ -43,7 +43,7 @@ public class Server extends UnicastRemoteObject implements IServer {
   private void execute(int port) throws RemoteException {
     try {
       this.registry = LocateRegistry.createRegistry(port); // create a registry at the user input port
-      registry.rebind("//localhost/TranslationServer", this); // bind the remote object to a custom name
+      registry.rebind("TranslationServer", this); // bind the remote object to a custom name
       this.logger.log("TranslationServer bound in registry");
       System.out.println("TranslationServer bound in registry");
       this.logger.log("TranslationServer is running on port " + port + "...");
@@ -139,7 +139,7 @@ public class Server extends UnicastRemoteObject implements IServer {
     this.logger.log("Received a request to shut down...");
     System.out.println("TranslationServer is shutting down...");
     try {
-      this.registry.unbind("//localhost/TranslationServer"); // unbind the remote object from the custom name
+      this.registry.unbind("TranslationServer"); // unbind the remote object from the custom name
       this.logger.log("TranslationServer unbound in registry");
     } catch (NotBoundException e) {
       this.logger.log("Unbind error: " + e.getMessage());

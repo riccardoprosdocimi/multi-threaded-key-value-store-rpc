@@ -26,7 +26,7 @@ public class Client implements IClient {
       this.logger = new Logger("ClientLogger", "ClientLog.log"); // instantiate a logging system that already is thread-safe
       this.scanner = new Scanner(System.in); // instantiate an object to get user input
       Registry registry = LocateRegistry.getRegistry("localhost", port); // get the server's registry
-      this.server = (IServer) registry.lookup("//localhost/TranslationServer"); // locate the remote object
+      this.server = (IServer) registry.lookup("TranslationServer"); // locate the remote object
     } catch (Exception e) {
       this.logger.log("Client error: " + e.getMessage());
       System.err.println("Client error: " + e.getMessage());
@@ -169,7 +169,7 @@ public class Client implements IClient {
     System.out.println("Client is shutting down...");
     try {
       this.server.shutdown(); // shut down the server
-      this.logger.log("TranslationServer shut down");
+      this.logger.log("TranslationServer closed");
     } catch (RemoteException e) {
       this.logger.log("TranslationServer error (shutdown): " + e.getMessage());
       System.err.println("TranslationServer error (shutdown): " + e.getMessage());
