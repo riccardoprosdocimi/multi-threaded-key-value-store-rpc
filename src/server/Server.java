@@ -8,31 +8,46 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import utils.ILogger;
 import utils.Logger;
 
+/**
+ * The type Server represents a translation server that communicates via Remote Method Invocation (RMI).
+ */
 public class Server extends UnicastRemoteObject implements IServer {
   private Registry registry;
   private final Map<String, String> dictionary;
   private final ILogger logger;
 
-  public Server() throws RemoteException {
-    super();
-    Map<String, String> hashMap = new HashMap<>();
-    this.dictionary = Collections.synchronizedMap(hashMap); // make the hashmap thread-safe
-    this.logger = new Logger("ServerLogger", "ServerLog.log"); // already thread-safe
-    this.execute();
+  /**
+   * Instantiates a new Server.
+   *
+   * @param port the port number
+   * @throws RemoteException the RMI failure
+   */
+  public Server(int port) throws RemoteException {
+    super(); // export the remote object
+    Map<String, String> store = new HashMap<>(); // instantiate the key-value store
+    this.dictionary = Collections.synchronizedMap(store); // make the key-value store thread-safe
+    this.logger = new Logger("ServerLogger", "ServerLog.log"); // instantiate a logging system that already is thread-safe
+    if (port >= 49152 && port <= 65535 || port == 1099) { // limit port numbers to valid values
+      this.execute(port);
+    } else {
+      this.logger.log("Invalid port number entered by the user: " + port);
+      System.err.println("Invalid port number. Please enter a port within the range 49152-65535 or 1099");
+      this.logger.close();
+      System.exit(1);
+    }
   }
 
-  private void execute() throws RemoteException {
+  private void execute(int port) throws RemoteException {
     try {
-      this.registry = LocateRegistry.createRegistry(50000);
-      registry.rebind("//localhost/TranslationServer", this);
+      this.registry = LocateRegistry.createRegistry(port); // create a registry at the user input port
+      registry.rebind("//localhost/TranslationServer", this); // bind the remote object to a custom name
       this.logger.log("TranslationServer bound in registry");
       System.out.println("TranslationServer bound in registry");
-      this.logger.log("TranslationServer is running...");
-      System.out.println("TranslationServer is running...");
+      this.logger.log("TranslationServer is running on port " + port + "...");
+      System.out.println("TranslationServer is running on port " + port + "...");
     } catch (Exception e) {
       this.logger.log("TranslationServer error: " + e.getMessage());
       System.err.println("TranslationServer error: " + e.getMessage());
@@ -46,14 +61,17 @@ public class Server extends UnicastRemoteObject implements IServer {
    * @param key   the word to be translated
    * @param value the translation
    * @return the outcome of the operation
+   * @throws RemoteException the RMI failure
    */
   @Override
-  public String put(String key, String value) {
-    if (this.dictionary.containsKey(key)) {
+  public String put(String key, String value) throws RemoteException {
+    key = key.toLowerCase();
+    if (this.dictionary.containsKey(key)) { // if the key is already in the store
       this.logger.log("FAIL: the translation for \"" + key + "\" already exists");
       return "FAIL: the translation for \"" + key + "\" already exists";
     } else {
-      this.dictionary.put(key.toLowerCase(), value.toLowerCase());
+      value = value.toLowerCase();
+      this.dictionary.put(key, value);
       this.logger.log("SUCCESS: added the key \"" + key + "\" associated with \"" + value + "\"");
       return "SUCCESS";
     }
@@ -64,12 +82,13 @@ public class Server extends UnicastRemoteObject implements IServer {
    *
    * @param key the word to be translated
    * @return the translation
+   * @throws RemoteException the RMI failure
    */
   @Override
-  public String get(String key) {
+  public String get(String key) throws RemoteException {
     key = key.toLowerCase();
     String translation;
-    if (this.dictionary.containsKey(key)) {
+    if (this.dictionary.containsKey(key)) { // if the key exists
       translation = this.dictionary.get(key);
       this.logger.log("SUCCESS: returned the value \"" + translation + "\" associated with \"" + key + "\"");
     } else {
@@ -84,11 +103,12 @@ public class Server extends UnicastRemoteObject implements IServer {
    *
    * @param key the word to be deleted
    * @return the outcome of the operation
+   * @throws RemoteException the RMI failure
    */
   @Override
-  public String delete(String key) {
+  public String delete(String key) throws RemoteException {
     key = key.toLowerCase();
-    if (this.dictionary.containsKey(key)) {
+    if (this.dictionary.containsKey(key)) { // if the key exists
       this.dictionary.remove(key);
       this.logger.log("SUCCESS: deleted the key-value pair associated with \"" + key + "\"");
       return "SUCCESS";
@@ -102,7 +122,7 @@ public class Server extends UnicastRemoteObject implements IServer {
    * Returns the size of the key-value store.
    *
    * @return the size of the key-value store
-   * @exception RemoteException the RMI failure
+   * @throws RemoteException the RMI failure
    */
   @Override
   public int getMapSize() throws RemoteException {
@@ -119,14 +139,14 @@ public class Server extends UnicastRemoteObject implements IServer {
     this.logger.log("Received a request to shut down...");
     System.out.println("TranslationServer is shutting down...");
     try {
-      this.registry.unbind("//localhost/TranslationServer");
+      this.registry.unbind("//localhost/TranslationServer"); // unbind the remote object from the custom name
       this.logger.log("TranslationServer unbound in registry");
     } catch (NotBoundException e) {
       this.logger.log("Unbind error: " + e.getMessage());
       e.printStackTrace();
       System.exit(1);
     }
-    UnicastRemoteObject.unexportObject(this, true);
+    UnicastRemoteObject.unexportObject(this, true); // unexport the remote object
     this.logger.log("TranslationServer unexported");
     this.logger.log("TranslationServer closed");
     this.logger.close();

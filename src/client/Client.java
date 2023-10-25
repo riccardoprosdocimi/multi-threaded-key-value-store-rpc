@@ -4,27 +4,36 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Scanner;
-
 import server.IServer;
 import utils.ILogger;
 import utils.Logger;
 
+/**
+ * The type Client represents a client that communicates via Remote Method Invocation (RMI).
+ */
 public class Client implements IClient {
   private Scanner scanner;
   private ILogger logger;
   private IServer server;
 
-  public Client() {
+  /**
+   * Instantiates a new Client.
+   *
+   * @param port the port number
+   */
+  public Client(int port) {
     try {
-      this.logger = new Logger("ClientLogger", "ClientLog.log");
-      this.scanner = new Scanner(System.in);
-      Registry registry = LocateRegistry.getRegistry("localhost", 50000);
-      this.server = (IServer) registry.lookup("//localhost/TranslationServer");
+      this.logger = new Logger("ClientLogger", "ClientLog.log"); // instantiate a logging system that already is thread-safe
+      this.scanner = new Scanner(System.in); // instantiate an object to get user input
+      Registry registry = LocateRegistry.getRegistry("localhost", port); // get the server's registry
+      this.server = (IServer) registry.lookup("//localhost/TranslationServer"); // locate the remote object
     } catch (Exception e) {
       this.logger.log("Client error: " + e.getMessage());
       System.err.println("Client error: " + e.getMessage());
-      this.shutdown();
+      this.scanner.close();
+      this.logger.close();
       e.printStackTrace();
+      System.exit(1);
     }
   }
 
@@ -48,13 +57,13 @@ public class Client implements IClient {
       System.out.println(this.server.put("love", "amore"));
       this.logger.log("Pre-population completed");
       System.out.println("Pre-population completed");
-      Thread.sleep(2000);
+      Thread.sleep(1000); // wait a second before user interaction
     } catch (RemoteException re) {
       this.logger.log("TranslationServer error (pre-populate): " + re.getMessage());
       System.err.println("TranslationServer error (pre-populate): " + re.getMessage());
       re.printStackTrace();
     } catch (InterruptedException ie) {
-      this.logger.log("Pre-population error: " + ie.getMessage());
+      this.logger.log("Pre-population error (timeout interrupted): " + ie.getMessage());
       ie.printStackTrace();
     }
   }
@@ -74,21 +83,21 @@ public class Client implements IClient {
     String result;
     String[] elements = request.split(":");
     if (elements.length < 2 || elements.length > 3) { // the protocol is not followed
-      this.logger.log("Received malformed request of length " + request.length() + " from the user");
+      this.logger.log("Received malformed request from the user: " + request);
       return "FAIL: please follow the predefined protocol PUT/GET/DELETE:key:value[with PUT only] and try again";
     } else {
       String operation;
       try {
         operation = elements[0]; // PUT/GET/DELETE
       } catch (Exception e) {
-        this.logger.log("Parsing error: operation. Request of length " + request.length() + " from the user");
+        this.logger.log("Parsing error: invalid operation");
         return "FAIL: could not parse the operation requested. Please follow the predefined protocol PUT/GET/DELETE:key:value[with PUT only] and try again";
       }
       String key;
       try {
         key = elements[1]; // word to be translated
       } catch (Exception e) {
-        this.logger.log("Parsing error: key. Request of length " + request.length() + " from the user");
+        this.logger.log("Parsing error: invalid key");
         return "FAIL: could not parse the key requested. Please follow the predefined protocol PUT/GET/DELETE:key:value[with PUT only] and try again";
       }
       String value;
@@ -97,9 +106,9 @@ public class Client implements IClient {
           case "PUT":
             try {
               value = elements[2]; // word to translate
-              this.logger.log("Received a request to save " + "\"" + key + "\"" + " mapped to " + "\"" + value + "\" from the user");
+              this.logger.log("Received a request to save " + "\"" + key + "\"" + " mapped to " + "\"" + value + "\"");
             } catch (Exception e) {
-              this.logger.log("Parsing error: value. Request of length " + request.length() + " from the user");
+              this.logger.log("Parsing error: invalid value");
               return "FAIL: could not parse the value requested. Please follow the predefined protocol PUT/GET/DELETE:key:value[with PUT only] and try again";
             }
             result = this.server.put(key, value);
@@ -107,24 +116,24 @@ public class Client implements IClient {
           case "GET":
             result = this.server.get(key);
             if (result.startsWith("FAIL:")) {
-              this.logger.log("Received a request to retrieve the value mapped to a nonexistent key " + "\"" + key + "\" " + "from the user");
+              this.logger.log("Received a request to retrieve the value mapped to a nonexistent key: \"" + key + "\"");
             } else {
-              this.logger.log("Received a request to retrieve the value mapped to " + "\"" + key + "\" " + "from the user");
+              this.logger.log("Received a request to retrieve the value mapped to \"" + key + "\"");
             }
             break;
           case "DELETE":
             result = this.server.delete(key);
             if (result.startsWith("FAIL:")) {
-              this.logger.log("Received a request to delete a nonexistent key-value pair associated with " + "\"" + key + "\" " + "from the user");
+              this.logger.log("Received a request to delete a nonexistent key-value pair associated with the key: \"" + key + "\"");
             } else {
-              this.logger.log("Received a request to delete the key-value pair associated with " + "\"" + key + "\" " + "from the user");
+              this.logger.log("Received a request to delete the key-value pair associated with the key: \"" + key + "\"");
             }
             break;
           default: // invalid request
             this.logger.log("Received an invalid request: " + request);
             return "Invalid request. Please follow the predefined protocol PUT/GET/DELETE:key:value[with PUT only] and try again";
         }
-      } catch (RemoteException e) {
+      } catch (RemoteException e) { // RMI failure
         this.logger.log("TranslationServer error: " + e.getMessage());
         result = "TranslationServer error: " + e.getMessage();
         e.printStackTrace();
@@ -140,30 +149,31 @@ public class Client implements IClient {
   public void execute() {
     boolean isRunning = true;
     this.logger.log("Client is running...");
-    while (isRunning) {
+    while (isRunning) { // keep getting user input
       String request = this.getRequest(); // get the user request
       if (request.equalsIgnoreCase("shutdown") || request.equalsIgnoreCase("stop")) { // if the user wants to quit
         isRunning = false; // prepare the shutdown process
       } else {
-        System.out.println(this.parseRequest(request));
+        System.out.println(this.parseRequest(request)); // process the request
       }
     }
-    this.shutdown();
+    this.shutdown(); // shut down both the server and the client
   }
 
   /**
-   * Stops the client.
+   * Stops the client and the server.
    */
   @Override
   public void shutdown() {
+    this.logger.log("Received a request to shut down...");
+    System.out.println("Client is shutting down...");
     try {
-      this.server.shutdown();
+      this.server.shutdown(); // shut down the server
+      this.logger.log("TranslationServer shut down");
     } catch (RemoteException e) {
       this.logger.log("TranslationServer error (shutdown): " + e.getMessage());
       System.err.println("TranslationServer error (shutdown): " + e.getMessage());
     }
-    this.logger.log("Received a request to shut down...");
-    System.out.println("Client is shutting down...");
     this.scanner.close();
     this.logger.log("Client closed");
     this.logger.close();

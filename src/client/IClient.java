@@ -1,9 +1,7 @@
 package client;
 
-import utils.ILogger;
-
 /**
- * The interface client contains methods that all types of clients should support.
+ * The interface Client contains methods that all types of RMI clients should support.
  */
 public interface IClient {
   /**

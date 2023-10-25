@@ -7,7 +7,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 
 /**
- * This class represents a logger.
+ * The type Logger represents a logger.
  */
 public class Logger implements ILogger {
   private java.util.logging.Logger logger;

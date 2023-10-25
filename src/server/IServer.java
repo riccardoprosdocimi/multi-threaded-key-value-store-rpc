@@ -4,7 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
- * The interface server contains methods that all types of translation servers should support.
+ * The interface Server contains methods that all types of RMI translation servers should support.
  */
 public interface IServer extends Remote {
   /**
